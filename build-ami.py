@@ -5,10 +5,14 @@ import subprocess
 from packerpy import PackerExecutable
 from botocore.exceptions import ClientError
 
-BUCKET_NAME = 'demo-s3lambdas'
+BUCKET_NAME = 'demos3-lambdas1'
 download_dir = '/tmp/'
-def lambda_handler(event, context):
-    
+def read_ssm_parameter(param):
+    ssm = boto3.client('ssm')
+    ssm_parameter = ssm.get_parameter(Name=param, WithDecryption=True)
+    return ssm_parameter['Parameter']['Value']
+
+def lambda_handler(event, context):    
     s3 = boto3.resource('s3')
     s3Client = boto3.client('s3')
     try:
@@ -18,9 +22,13 @@ def lambda_handler(event, context):
            s3Client.download_file(BUCKET_NAME, filename, f'{download_dir}{filename}')
     except ClientError as e:
         return False
-    #subprocess.call("ls -lrt /opt/python/lib/python3.8/site-packages/packerpy", shell=True)
+    
+    amiVersion = read_ssm_parameter('baseimage')  
+    
     p = PackerExecutable("/opt/python/lib/python3.8/site-packages/packerpy/packer")
-    #p.validate(f'{download_dir}ami-packer.json')
-    (ret, out, err)=p.build(f'{download_dir}ami-packer.json')
+    #(ret, out, err)=p.build -var-file=variables.json f'{download_dir}ami-packer.json'
+
+    template = f'{download_dir}gold-ami.json'
+    template_vars = {'baseimage': amiVersion}
+    (ret, out, err) = p.build(template,var=template_vars)
     print(out)
-    subprocess.call("ls -lrt /tmp", shell=True)
