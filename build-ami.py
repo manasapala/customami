@@ -5,12 +5,16 @@ import subprocess
 from packerpy import PackerExecutable
 from botocore.exceptions import ClientError
 
+# Fetching the ami-id from Parameter store
+
 BUCKET_NAME = 'demos3-lambdas1'
 download_dir = '/tmp/'
 def read_ssm_parameter(param):
     ssm = boto3.client('ssm')
     ssm_parameter = ssm.get_parameter(Name=param, WithDecryption=True)
     return ssm_parameter['Parameter']['Value']
+
+#downloading the source code from s3 bucket
 
 def lambda_handler(event, context):    
     s3 = boto3.resource('s3')
@@ -24,7 +28,7 @@ def lambda_handler(event, context):
         return False
     
     amiVersion = read_ssm_parameter('baseimage')  
-    
+# Trigger packer from python + packer executable layer    
     p = PackerExecutable("/opt/python/lib/python3.8/site-packages/packerpy/packer")
     #(ret, out, err)=p.build -var-file=variables.json f'{download_dir}ami-packer.json'
 
