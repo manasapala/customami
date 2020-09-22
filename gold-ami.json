@@ -1,33 +1,26 @@
 {
-  "variables": {
-    "region": "us-east-2"
-  },
-  "builders": [
-    {
-      "ami_name": "ami-linux-aws-custom-{{timestamp}}-new",
-      "instance_type": "t2.micro",
-      "region": "{{user `region`}}",
-      "source_ami_filter": {
-        "filters": {
-          "virtualization-type": "hvm",
-          "name": "ubuntu/images/*ubuntu-xenial-16.04-amd64-server-*",
-          "root-device-type": "ebs"
-        },
-        "owners": ["099720109477"],
-        "most_recent": true
-      },
-      "ssh_username": "ubuntu",
-      "type": "amazon-ebs"
-    }
-  ],
-
-  "provisioners": [
-    {
-      "type": "shell",
-      "scripts": ["/tmp/install.sh"],
-      "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
-      "pause_before": "10s"
-    }
-
-  ]
-}
+    "variables": {
+      "region": "us-east-2",
+      "baseimage": ""
+    },
+    "builders": [
+      {
+        "ami_name": "ami-linux-aws-custom-{{timestamp}}-new",
+        "instance_type": "t2.micro",
+        "region": "{{user `region`}}",
+        "source_ami": "{{user `baseimage`}}",
+        "ssh_username": "ubuntu",
+        "type": "amazon-ebs"
+      }
+    ],
+  
+    "provisioners": [
+      {
+        "type": "shell",
+        "scripts": ["/tmp/install.sh"],
+        "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+        "pause_before": "10s"
+      }
+  
+    ]
+  }
