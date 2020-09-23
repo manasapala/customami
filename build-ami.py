@@ -43,13 +43,13 @@ def lambda_handler(event, context):
         return False
     
     amiBaseImage = read_ssm_parameter('baseimage')  
-# Trigger packer from python + packer executable layer    
-    p = PackerExecutable("/opt/python/lib/python3.8/site-packages/packerpy/packer")
+    # Trigger packer from python + packer executable layer    
+    pkr = PackerExecutable("/opt/python/lib/python3.8/site-packages/packerpy/packer")
     template = f'{download_dir}gold-ami.json'
     template_vars = {'baseimage': amiBaseImage}
-    (ret, out, err) = p.build(template,var=template_vars)
-    s = out.decode('ISO-8859-1')
+    (ret, out, err) = pkr.build(template,var=template_vars)
+    outDecoded = out.decode('ISO-8859-1')
     if ret == 0:
-        p = re.search(('ami-[0-9][a-zA-Z0-9_]{16}'), s)
-        value = p.group(0)
-        update_ssm_parameter('ami-latest', value)
+        ami = re.search(('ami-[0-9][a-zA-Z0-9_]{16}'), outDecoded)
+        amivalue = ami.group(0)
+        update_ssm_parameter('ami-latest', amivalue)
