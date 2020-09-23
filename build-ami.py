@@ -2,6 +2,7 @@ from __future__ import print_function
 import boto3
 import io
 import subprocess
+import re
 from packerpy import PackerExecutable
 from botocore.exceptions import ClientError
 
@@ -13,6 +14,20 @@ def read_ssm_parameter(param):
     ssm = boto3.client('ssm')
     ssm_parameter = ssm.get_parameter(Name=param, WithDecryption=True)
     return ssm_parameter['Parameter']['Value']
+
+def update_ssm_parameter(param, value):
+    SSM_CLIENT = boto3.client('ssm')
+    response = SSM_CLIENT.put_parameter(
+        Name=param,        
+        Value=value,
+        Type='String',
+        Overwrite=True
+    )
+
+    if type(response['Version']) is int:
+        return True
+    else:
+        return False
 
 #downloading the source code from s3 bucket
 
@@ -27,12 +42,14 @@ def lambda_handler(event, context):
     except ClientError as e:
         return False
     
-    amiVersion = read_ssm_parameter('baseimage')  
+    amiBaseImage = read_ssm_parameter('baseimage')  
 # Trigger packer from python + packer executable layer    
     p = PackerExecutable("/opt/python/lib/python3.8/site-packages/packerpy/packer")
-    #(ret, out, err)=p.build -var-file=variables.json f'{download_dir}ami-packer.json'
-
     template = f'{download_dir}gold-ami.json'
-    template_vars = {'baseimage': amiVersion}
+    template_vars = {'baseimage': amiBaseImage}
     (ret, out, err) = p.build(template,var=template_vars)
-    print(out)
+    s = out.decode('ISO-8859-1')
+    if ret == 0:
+        p = re.search(('ami-[0-9][a-zA-Z0-9_]{16}'), s)
+        value = p.group(0)
+        update_ssm_parameter('ami-latest', value)
