@@ -50,6 +50,6 @@ def lambda_handler(event, context):
     (ret, out, err) = pkr.build(template,var=template_vars)
     outDecoded = out.decode('ISO-8859-1')
     if ret == 0:
-        ami = re.search(('ami-[0-9][a-zA-Z0-9_]{16}'), outDecoded)
+        ami = re.search((':ami-[0-9][a-zA-Z0-9_]{16}'), outDecoded)
         amivalue = ami.group(0)
         update_ssm_parameter('ami-latest', amivalue)
