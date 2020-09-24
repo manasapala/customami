@@ -52,4 +52,5 @@ def lambda_handler(event, context):
     if ret == 0:
         ami = re.search((':ami-[0-9][a-zA-Z0-9_]{16}'), outDecoded)
         amivalue = ami.group(0)
+        amivalue = amivalue[1:]
         update_ssm_parameter('ami-latest', amivalue)
